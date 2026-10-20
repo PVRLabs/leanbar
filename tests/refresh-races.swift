@@ -8,7 +8,6 @@ app.delegate = host
 let directory = URL(fileURLWithPath: args[1]).deletingLastPathComponent()
 var phase = 0
 var oldItem: NSMenuItem?
-var snapshotTitle = ""
 let started = Date()
 func require(_ condition: Bool, _ name: String) {
     if !condition { fputs("FAIL: \(name)\n", stderr); exit(1) }
@@ -25,7 +24,7 @@ let poll = Timer(timeInterval: 0.05, repeats: true) { _ in
     switch phase {
     case 0:
         guard !host.busy, host.rows.count == 2 else { return }
-        snapshotTitle = host.stateItem!.title
+        require(host.stateItem!.isHidden, "idle snapshot has no status row")
         oldItem = host.menu.items.first { $0.title == "Record argv" }!
         let label = host.menu.items.first { $0.title == "Waiting for action" }!
         require((label.attributedTitle?.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor) == .systemGreen,
@@ -45,6 +44,7 @@ let poll = Timer(timeInterval: 0.05, repeats: true) { _ in
         require(host.actions.count == host.maximumQueuedActions && host.stateItem!.title.contains("queue full"),
                 "unique action queue is bounded with visible overflow feedback")
         host.actions = []; host.busy = false; host.queueNotice = nil
+        host.updateState()
         mark("mode"); mark("delay"); mark("action-delay")
         try! FileManager.default.removeItem(at: directory.appendingPathComponent("producer-started"))
         phase = 1
@@ -52,12 +52,12 @@ let poll = Timer(timeInterval: 0.05, repeats: true) { _ in
     case 1:
         guard host.opened, host.busy,
               FileManager.default.fileExists(atPath: directory.appendingPathComponent("producer-started").path) else { return }
-        require(host.stateItem!.title == snapshotTitle, "refresh keeps displayed snapshot timestamp without progress noise")
+        require(host.stateItem!.isHidden, "background refresh keeps status row hidden")
         phase = 11
         // Dispatch the bound handler without AppKit automatically closing the menu.
         host.action(oldItem!)
         require(host.actions.count == 1, "click queues behind slow on-open refresh")
-        require(host.stateItem!.title.contains("queued"), "queued action feedback")
+        require(!host.stateItem!.isHidden && host.stateItem!.title.contains("queued"), "queued feedback appears while tracking")
         host.action(oldItem!)
         require(host.actions.count == 1 && !oldItem!.isEnabled && oldItem!.title.contains("queued"),
                 "duplicate queued click suppressed and item marked queued")
@@ -65,7 +65,7 @@ let poll = Timer(timeInterval: 0.05, repeats: true) { _ in
                 "queued progress label cannot show updated menu")
     case 11:
         guard host.activeCommand != nil else { return }
-        require(host.pending && host.stateItem!.title.hasPrefix("Running"), "running action with pending snapshot")
+        require(host.pending && !host.stateItem!.isHidden && host.stateItem!.title.hasPrefix("Running"), "running action with pending snapshot")
         require(host.stateItem!.action == nil && !host.stateItem!.isEnabled,
                 "running progress label cannot show updated menu")
         host.action(oldItem!)
@@ -82,7 +82,7 @@ let poll = Timer(timeInterval: 0.05, repeats: true) { _ in
         guard !host.busy, host.actions.isEmpty, host.rows.count == 3 else { return }
         require(host.opened, "refresh and queued action complete while menu stays open")
         require(history() == [expected], "queued action executes exactly once with original argv")
-        require(host.stateItem!.title == snapshotTitle, "pending snapshot does not relabel the displayed snapshot")
+        require(host.stateItem!.isHidden, "completed actions hide status while fresh snapshot is pending")
         require(host.menu.items.contains { $0 === oldItem }, "visible snapshot remains stable after row insertion")
         require(host.stateItem!.action == nil && !host.stateItem!.isEnabled, "snapshot feedback remains informational")
         phase = 3
@@ -106,9 +106,12 @@ let poll = Timer(timeInterval: 0.05, repeats: true) { _ in
     case 5:
         guard !host.busy, host.message.hasPrefix("Failed:") else { return }
         require(host.rows.isEmpty, "failure clears current snapshot")
+        require(!host.stateItem!.isHidden && host.stateItem!.title.hasPrefix("Failed:"), "failure feedback appears while tracking")
         require(host.menu.items.filter { $0.representedObject is MenuCommand }.allSatisfy { !$0.isEnabled && $0.action == nil },
                 "failure disables stale visible actions while tracking")
         host.menuDidClose(host.menu)
+        require(!host.stateItem!.isHidden && host.stateItem!.title.hasPrefix("Failed:"),
+                "failure feedback remains after closing")
         print("PASS: only two intended fixture commands executed; driver verifies exact invocation history")
         app.terminate(nil)
     default: break

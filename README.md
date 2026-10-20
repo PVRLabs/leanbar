@@ -3,6 +3,8 @@
 A light, low-resource menu-bar host with a simple philosophy: **keep your
 scripts, keep the host small**.
 
+![LeanBar desk menu](docs/img/menu.png)
+
 LeanBar is an almost drop-in replacement for SwiftBar when your menu uses its
 small supported subset. A script prints status and actions; LeanBar turns them
 into a native macOS menu. Use it as a small control panel for services, apps,
@@ -22,6 +24,9 @@ machine. There are no packages to download.
 ./build.sh
 open .build/LeanBar.app --args "$PWD/examples/menu.sh"
 ```
+
+`examples/menu.sh` is a live desk: a greeting, the time, power, free disk,
+and a few actions.
 
 To reuse an existing script, pass its absolute executable path:
 
@@ -82,10 +87,13 @@ Run a read-only producer through the parser before switching:
 
 ## Quiet refresh, bounded commands
 
-Opening shows a timestamped cached snapshot and requests fresh status. Close
-and reopen to see the result. Menu structure stays stable while open, and each
-action retains the argv of the item you saw. Refreshes are quiet; only explicit
-queued/running actions show progress. Failures disable stale visible actions.
+Opening shows the cached menu and requests fresh status. Close and reopen
+to see refreshed rows. There is no normal snapshot or timestamp row. Existing
+items can update text, colors, progress and enabled states while open, and a
+status row can appear or disappear as needed. Operational action items are not
+inserted, removed or reordered during interaction; each retains the argv of
+the item you saw. Background refreshes are quiet. Queued/running actions show
+progress, and failures disable stale visible actions immediately.
 
 Commands run off the UI thread, one at a time. Explicit actions queue ahead of
 coalesced refresh requests. Identical argv cannot be submitted again while

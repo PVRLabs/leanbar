@@ -29,6 +29,7 @@ let poll = Timer(timeInterval: 0.2, repeats: true) { _ in
     case 0:
         guard host.rows.count == 2 else { return }
         require(host.rows[0].text == "Waiting for action", "fixture rendered")
+        require(host.stateItem!.isHidden, "successful snapshot has no status row")
         guard let index = host.menu.items.firstIndex(where: { $0.title == "Record argv" }) else {
             require(false, "action exists"); return
         }
@@ -60,6 +61,7 @@ let poll = Timer(timeInterval: 0.2, repeats: true) { _ in
         phase = 6; host.refresh()
     case 6:
         require(host.rows.first?.text == "Action recorded", "producer recovers after failure")
+        require(host.stateItem!.isHidden, "recovery hides error row")
         sample("recovered")
         print("Completed 12 actual menu open/close cycles; fixture argv verified by Python driver")
         app.terminate(nil)

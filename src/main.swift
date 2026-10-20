@@ -90,14 +90,14 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     func updateState() {
         guard let state = stateItem else { return }
-        let snapshotMessage = state.representedObject as? String ?? message
         if let notice = queueNotice {
             state.title = notice
         } else if !actions.isEmpty {
-            state.title = "Action queued (\(actions.count)) — \(snapshotMessage)"
+            state.title = "Action queued (\(actions.count))"
         } else if let command = activeCommand {
             state.title = "Running \(command.title)…"
-        } else { state.title = message.hasPrefix("Failed:") ? message : snapshotMessage }
+        } else { state.title = message }
+        state.isHidden = state.title.isEmpty
         state.action = nil
         state.target = self
         state.isEnabled = false
@@ -122,7 +122,6 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard !opened else { pending = true; updateState(); return }
         pending = false; menu.removeAllItems()
         let state = NSMenuItem(title: message, action: nil, keyEquivalent: "")
-        state.representedObject = message
         stateItem = state; menu.addItem(state)
         for row in rows {
             if row.text == "---" { menu.addItem(.separator()); continue }
@@ -215,7 +214,7 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     }
                     if producerResult {
                         self.rows = try parse(completed["stdout"] as? String ?? "")
-                        self.message = "Snapshot \(DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium))"
+                        self.message = ""
                     } else { self.refreshPending = true }
                 } catch {
                     self.rows = []; self.message = "Failed: \(error)"
