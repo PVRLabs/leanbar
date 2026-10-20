@@ -193,8 +193,12 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
         busy = true; updateState()
         DispatchQueue.global(qos: .utility).async {
             let p = Process(), pipe = Pipe()
-            p.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
-            p.arguments = [self.helper] + argv; p.standardOutput = pipe
+            // GUI apps do not inherit Homebrew's shell PATH. Prefer its declared
+            // runtime dependency; keep Apple's Python for local source builds.
+            let python = ["/opt/homebrew/bin/python3", "/usr/local/bin/python3", "/usr/bin/python3"]
+                .first { FileManager.default.isExecutableFile(atPath: $0) } ?? "/usr/bin/python3"
+            p.executableURL = URL(fileURLWithPath: python)
+            p.arguments = ["-I", self.helper] + argv; p.standardOutput = pipe
             var result: [String: Any] = [:]
             do {
                 try p.run()

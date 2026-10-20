@@ -17,13 +17,18 @@ a short-lived Python helper bounds command execution.
 ## Build and run
 
 Requires macOS, Apple's Swift compiler/Command Line Tools, and
-`/usr/bin/python3` (provided with the developer tools). Builds for the local
+Python 3 (Homebrew Python is preferred; `/usr/bin/python3` from the developer
+tools is the fallback). Builds for the local
 machine. There are no packages to download.
 
 ```sh
 ./build.sh
 open .build/LeanBar.app --args "$PWD/examples/menu.sh"
 ```
+
+Use `./build.sh --universal` to build for both Intel and Apple Silicon with a
+macOS 13 minimum. The app includes the MIT license and example menu in
+`Contents/Resources/`.
 
 `examples/menu.sh` is a live desk: a greeting, the time, power, free disk,
 and a few actions.
@@ -129,8 +134,9 @@ processes. They use harmless temporary fixtures, including literal argv,
 refresh/action overlap, duplicate suppression, menu cycles and failure recovery.
 Build artifacts and test results remain under ignored `.build/`.
 
-GitHub Actions runs one macOS build and the noninteractive tests on pull
-requests and pushes to `main`. Interactive menu checks remain local.
+GitHub Actions builds the universal app, verifies its signature, and runs the
+noninteractive tests on Intel and Apple Silicon on pull requests and pushes to
+`main`. Interactive menu checks remain local.
 
 ## Scope and license
 
@@ -138,8 +144,6 @@ A small personal utility shared as-is. Fixes are occasional; there is no active
 feature roadmap. Keep changes small and motivated by real menus. Linux remains
 future research.
 
-See [releasing](docs/releasing.md) for the short manual release process and
-remaining binary-distribution work. Homebrew distribution is planned, not yet
-available.
+See [releasing](docs/releasing.md) for the short manual release process.
 
 [MIT](LICENSE) © 2026 PVRLabs.

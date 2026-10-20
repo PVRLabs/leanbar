@@ -4,19 +4,19 @@ Keep releases manual and small. This is a personal utility shared as-is, with
 occasional fixes rather than an active roadmap. Summarize changes directly in
 the GitHub release description. No separate changelog or announcement process.
 
-## Before the first public binary
+## Distribution choices
 
-Local source builds and CI work now. Binary distribution and Homebrew packaging
-are still pending. Resolve these once before shipping:
-
-- Choose a minimum macOS version and build/test Intel and Apple Silicon artifacts
-  (or a single universal app). The current build targets the build machine.
-- Resolve the helper's `/usr/bin/python3` dependency. It currently assumes Apple
-  developer tools; either use a declared Homebrew Python dependency with matching
-  runtime lookup, or implement the bounded runner natively. Do not claim the
-  current app runs on a clean Mac without developer tools.
-- Choose and verify signing/notarization for downloaded app bundles. The current
-  local build is ad-hoc signed.
+- `./build.sh --universal` builds Intel and Apple Silicon slices targeting macOS
+  13. CI builds and runs noninteractive checks on both architectures; local GUI
+  checks currently run on Intel macOS 15.
+- The cask declares a Homebrew `python` dependency. The host looks for
+  `/opt/homebrew/bin/python3`, then `/usr/local/bin/python3`, then Apple's
+  `/usr/bin/python3` for source builds. Python runs in isolated mode. Manual
+  downloads also require Python at one of those paths.
+- Releases are ad-hoc signed, without Developer ID signing or notarization.
+  Document Gatekeeper approval under System Settings → Privacy & Security;
+  do not bypass quarantine in the cask.
+- Include the MIT license and example menu inside the app's resources.
 
 ## Small release checklist
 
@@ -24,7 +24,7 @@ are still pending. Resolve these once before shipping:
    version in `build.sh`'s bundle metadata. Get review/commit approval, commit,
    and push. Wait for the main CI build and noninteractive tests to pass.
 2. Run the local GUI checks from README on the intended release app source.
-   Build the supported architecture artifacts and verify the version and app
+   Run `./build.sh --universal` and verify the version, both slices, and app
    signature. Package each app as a ZIP and produce a SHA-256 checksum naming
    the archive, not a machine-specific path. Include the MIT license.
 3. Tag the verified release commit `vX.Y.Z`. Create the GitHub Release with the
