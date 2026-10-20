@@ -14,6 +14,25 @@ One script. One native menu. Plain **LB** text in the menu bar. No marketplace,
 settings UI, animation, or third-party libraries. The host uses Swift + AppKit;
 a short-lived Python helper bounds command execution.
 
+## Install
+
+Requires macOS 13 or newer. The app supports Intel and Apple Silicon.
+
+```sh
+brew install --cask pvrlabs/tap/leanbar
+open /Applications/LeanBar.app --args /Applications/LeanBar.app/Contents/Resources/menu.sh
+```
+
+Homebrew installs Python 3 for the command helper. Pass an absolute executable
+script path instead of the bundled example to use your own menu.
+
+The app is ad-hoc signed and not notarized. If macOS blocks the first launch,
+allow LeanBar in **System Settings → Privacy & Security → Open Anyway**,
+then rerun the launch command if needed.
+
+See the [installation guide](docs/install.md) for a `curl` download with checksum
+verification, custom-script launch commands, upgrades, and uninstall steps.
+
 ## Build and run
 
 Requires macOS, Apple's Swift compiler/Command Line Tools, and
@@ -31,7 +50,8 @@ macOS 13 minimum. The app includes the MIT license and example menu in
 `Contents/Resources/`.
 
 `examples/menu.sh` is a live desk: a greeting, the time, power, free disk,
-and a few actions.
+and a few actions. `examples/menu-demo.sh` uses a sample machine name and disk
+value for release screenshots.
 
 To reuse an existing script, pass its absolute executable path:
 
@@ -141,9 +161,11 @@ noninteractive tests on Intel and Apple Silicon on pull requests and pushes to
 ## Scope and license
 
 A small personal utility shared as-is. Fixes are occasional; there is no active
-feature roadmap. Keep changes small and motivated by real menus. Linux remains
-future research.
+feature roadmap. Keep changes small and motivated by real menus. Cross-platform
+support is a future direction; macOS is the only implemented platform.
 
 See [releasing](docs/releasing.md) for the short manual release process.
+Release history is in [CHANGELOG.md](CHANGELOG.md); contributor principles are in
+[AGENTS.md](AGENTS.md).
 
 [MIT](LICENSE) © 2026 PVRLabs.
