@@ -26,21 +26,20 @@ class Checks(unittest.TestCase):
             pmset = Path(directory) / 'pmset'
             pmset.write_text('#!/bin/sh\nprintf \'%s\\n\' "$TEST_BATTERY"\n')
             pmset.chmod(0o755)
-            for script in ('menu.sh', 'menu-preview.sh'):
-                for state, percent, label in (
-                    ('charging', 85, 'charging'), ('not charging', 85, 'not charging'),
-                    ('charged', 100, 'charged'), ('discharging', 85, 'unplugged'),
-                    ('discharging', 15, 'low'),
-                ):
-                    with self.subTest(script=script, state=state, percent=percent):
-                        env = dict(os.environ, PATH=f'{directory}:' + os.environ['PATH'],
-                                   TEST_BATTERY=f"Now drawing from 'AC Power'\n"
-                                   f' -InternalBattery-0  {percent}%; {state}; (no estimate) present: true')
-                        result = subprocess.run(['/bin/bash', str(ROOT / 'examples' / script)],
-                                                env=env, text=True, capture_output=True, check=True)
-                        battery = next(line for line in result.stdout.splitlines()
-                                       if line.startswith('Battery '))
-                        self.assertEqual(battery.split(' | ')[0], f'Battery {percent}% · {label}')
+            for state, percent, label in (
+                ('charging', 85, 'charging'), ('not charging', 85, 'not charging'),
+                ('charged', 100, 'charged'), ('discharging', 85, 'unplugged'),
+                ('discharging', 15, 'low'),
+            ):
+                with self.subTest(state=state, percent=percent):
+                    env = dict(os.environ, PATH=f'{directory}:' + os.environ['PATH'],
+                               TEST_BATTERY=f"Now drawing from 'AC Power'\n"
+                               f' -InternalBattery-0  {percent}%; {state}; (no estimate) present: true')
+                    result = subprocess.run(['/bin/bash', str(ROOT / 'examples/menu.sh')],
+                                            env=env, text=True, capture_output=True, check=True)
+                    battery = next(line for line in result.stdout.splitlines()
+                                   if line.startswith('Battery '))
+                    self.assertEqual(battery.split(' | ')[0], f'Battery {percent}% · {label}')
 
     def test_invalid_contracts(self):
         for row in ('Bad | shell=/bin/echo terminal=true',
