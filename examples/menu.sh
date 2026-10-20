@@ -1,5 +1,6 @@
 #!/bin/bash
 # Flat desk menu. SwiftBar shows the first line in the bar; LeanBar shows LB.
+# LeanBar may support a custom menu bar title from the first line in a future release.
 # Status lines have no command. Actions use an absolute executable and terminal=false.
 
 hour=$(date +%H)
