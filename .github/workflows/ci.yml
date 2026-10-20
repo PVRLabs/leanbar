@@ -22,7 +22,7 @@ jobs:
         run: ./build.sh --universal
       - name: Verify universal app signature
         run: |
-          lipo -verify_arch arm64 x86_64 .build/LeanBar.app/Contents/MacOS/LeanBar
+          lipo .build/LeanBar.app/Contents/MacOS/LeanBar -verify_arch arm64 x86_64
           codesign --verify --deep --strict .build/LeanBar.app
       - name: Run noninteractive tests
         run: python3 tests/check.py
