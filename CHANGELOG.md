@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Renamed the screenshot example to `examples/menu-demo.sh` for future release
+  screenshots; `examples/menu.sh` remains the live example shipped with the app.
+
 ## 0.1.0 — 2026-10-20
 
 First public release.
