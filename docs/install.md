@@ -67,10 +67,16 @@ Use one installation method to avoid duplicate copies.
 This release is ad-hoc signed. It has no verified publisher identity and is not
 notarized by Apple. macOS may block the first launch of a downloaded copy.
 
-After attempting to launch with the command above, open **System Settings →
-Privacy & Security**, find the LeanBar message, and choose **Open Anyway**.
-Confirm **Open** if prompted, then run the launch command again if needed.
-The cask leaves macOS quarantine protections in place.
+1. Run the launch command for your installation above. macOS may block LeanBar
+   with an unverified-app warning. Dismiss that warning.
+2. Open **System Settings → Privacy & Security**. Scroll to the security section
+   and find the message about LeanBar being blocked.
+3. Choose **Open Anyway**, authenticate if asked, and confirm **Open**.
+4. Run the launch command again if the menu has not appeared. LeanBar needs its
+   menu-script argument; opening the app alone does not configure a menu.
+
+Do this once for the downloaded copy before using it normally. This also applies
+to the Homebrew install: the cask leaves macOS quarantine protections in place.
 
 ## Upgrade or uninstall
 
