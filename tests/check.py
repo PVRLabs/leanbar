@@ -27,6 +27,25 @@ class Checks(unittest.TestCase):
                                         text=True, capture_output=True)
                 self.assertNotEqual(result.returncode, 0)
 
+    def test_parameter_keys_are_canonical(self):
+        for key in ('param01', 'param001', 'param+1', 'param0', 'param-1',
+                    'param', 'param１', 'param999999999999999999999999999999'):
+            for command in ('shell=/bin/echo terminal=false ', ''):
+                with self.subTest(key=key, command=command):
+                    text = f'Example\n---\nRun | {command}{key}=hello\n'
+                    result = subprocess.run([str(BINARY), '--check'], input=text,
+                                            text=True, capture_output=True)
+                    self.assertEqual(result.returncode, 1, result.stderr)
+                    self.assertIn(key, result.stderr)
+
+    def test_canonical_parameters_parse_in_any_order(self):
+        parameters = ' '.join(f'param{i}=value{i}' for i in range(12, 0, -1))
+        text = f'Example\n---\nRun | shell=/bin/echo terminal=false {parameters}\n'
+        result = subprocess.run([str(BINARY), '--check'], input=text,
+                                text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('1 actions', result.stdout)
+
     def test_literal_argv(self):
         result = helper.invoke([sys.executable, '-c', 'import sys; print(repr(sys.argv[1:]))',
                                 'a b', '$(touch never)'])

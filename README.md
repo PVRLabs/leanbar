@@ -65,7 +65,8 @@ Last success: 09:00 | size=12
   Sizes are clamped to 9–24 points. Labels without commands are disabled.
 - `bash` and `shell` both identify an absolute executable, run directly.
   Scripts need executable permission and a shebang. `terminal=false` is required.
-- `param1`, `param2`, … are consecutive argv values. Whitespace separates
+- `param1`, `param2`, … are consecutive argv values. Keys must use canonical
+  positive integers, without leading zeros or signs. Whitespace separates
   fields; single/double quotes and backslash preserve spaces and literals.
   Shell expansion is never performed. Duplicate and unknown fields fail the
   snapshot. Avoid literal pipes and newlines in row labels.

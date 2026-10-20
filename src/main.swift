@@ -36,9 +36,14 @@ func parse(_ text: String) throws -> [Row] {
                 let pair = token.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
                 guard pair.count == 2 else { throw Invalid.format("Invalid field") }
                 let key = String(pair[0])
-                guard ["bash", "shell", "terminal", "refresh", "color", "size"].contains(key) ||
-                        (key.hasPrefix("param") && Int(key.dropFirst(5)) != nil) else {
-                    throw Invalid.format("Unsupported field: \(key)")
+                if key.hasPrefix("param") {
+                    guard let index = Int(key.dropFirst(5)), index > 0, key == "param\(index)" else {
+                        throw Invalid.format("Invalid parameter key: \(key)")
+                    }
+                } else {
+                    guard ["bash", "shell", "terminal", "refresh", "color", "size"].contains(key) else {
+                        throw Invalid.format("Unsupported field: \(key)")
+                    }
                 }
                 guard fields[key] == nil else { throw Invalid.format("Duplicate field") }
                 fields[key] = String(pair[1])
