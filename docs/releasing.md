@@ -1,8 +1,8 @@
 # Releasing LeanBar
 
 Keep releases manual and small. This is a personal utility shared as-is, with
-occasional fixes rather than an active roadmap. Summarize changes directly in
-the GitHub release description. No separate changelog or announcement process.
+occasional fixes rather than an active roadmap. Keep `CHANGELOG.md` current and
+summarize the release in its GitHub description. No announcement process.
 
 ## Distribution choices
 
@@ -20,7 +20,7 @@ the GitHub release description. No separate changelog or announcement process.
 
 ## Small release checklist
 
-1. Review the changes and prepare a short user-facing summary. Set the exact
+1. Review the changes, update `CHANGELOG.md`, and prepare a short user-facing summary. Set the exact
    version in `build.sh`'s bundle metadata. Get review/commit approval, commit,
    and push. Wait for the main CI build and noninteractive tests to pass.
 2. Run the local GUI checks from README on the intended release app source.
