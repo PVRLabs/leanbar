@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Refresh status label text, color and size while the menu is open; defer
+  structural changes until closing and preserve visible action commands.
+
 - Renamed the screenshot example to `examples/menu-demo.sh` for future release
   screenshots; `examples/menu.sh` remains the live example shipped with the app.
 

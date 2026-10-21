@@ -112,10 +112,11 @@ Run a read-only producer through the parser before switching:
 
 ## Quiet refresh, bounded commands
 
-Opening shows the cached menu and requests fresh status. Close and reopen
-to see refreshed rows. There is no normal snapshot or timestamp row. Existing
-items can update text, colors, progress and enabled states while open, and a
-status row can appear or disappear as needed. Operational action items are not
+Opening shows the cached menu and requests fresh status. Status labels update
+while open when their section keeps the same number of labels; added or removed
+labels and separators appear after closing and reopening. There is no normal
+snapshot or timestamp row. Labels can update text, colors and sizes.
+Operational action items are not
 inserted, removed or reordered during interaction; each retains the argv of
 the item you saw. Background refreshes are quiet. Queued/running actions show
 progress, and failures disable stale visible actions immediately.

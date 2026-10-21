@@ -70,6 +70,7 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var activeCommand: MenuCommand?
     var queueNotice: String?
     let maximumQueuedActions = 16
+    var visibleLabels = [[NSMenuItem]]()
     var stateItem: NSMenuItem?
     var timer: Timer?
     let producer: String, helper: String, interval: Double
@@ -119,12 +120,18 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // Update existing item properties only while tracking, never menu structure.
     }
     func render() {
-        guard !opened else { pending = true; updateState(); return }
+        guard !opened else {
+            pending = true
+            updateLabels()
+            updateState()
+            return
+        }
         pending = false; menu.removeAllItems()
+        visibleLabels = [[]]
         let state = NSMenuItem(title: message, action: nil, keyEquivalent: "")
         stateItem = state; menu.addItem(state)
         for row in rows {
-            if row.text == "---" { menu.addItem(.separator()); continue }
+            if row.text == "---" { menu.addItem(.separator()); visibleLabels.append([]); continue }
             let executable = row.fields["bash"] ?? row.fields["shell"]
             let entry = NSMenuItem(title: row.text, action: executable != nil ? #selector(action(_:)) : nil, keyEquivalent: "")
             entry.target = self
@@ -134,14 +141,8 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 let args = count == 0 ? [] : (1...count).map { row.fields["param\($0)"]! }
                 entry.representedObject = MenuCommand(title: row.text, argv: [executable] + args)
             }
-            var attributes = [NSAttributedString.Key: Any]()
-            if let size = Double(row.fields["size"] ?? ""), size.isFinite {
-                attributes[.font] = NSFont.systemFont(ofSize: min(24, max(9, size)))
-            }
-            if let name = row.fields["color"] { attributes[.foregroundColor] = color(name) }
-            if !attributes.isEmpty {
-                entry.attributedTitle = NSAttributedString(string: row.text, attributes: attributes)
-            }
+            style(entry, row: row)
+            if executable == nil { visibleLabels[visibleLabels.count - 1].append(entry) }
             menu.addItem(entry)
         }
         menu.addItem(.separator())
@@ -150,6 +151,31 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let quit = NSMenuItem(title: "Quit LeanBar", action: #selector(quitHost), keyEquivalent: "q")
         quit.target = self; menu.addItem(quit)
         updateState()
+    }
+    func style(_ entry: NSMenuItem, row: Row) {
+        var attributes = [NSAttributedString.Key: Any]()
+        if let size = Double(row.fields["size"] ?? ""), size.isFinite {
+            attributes[.font] = NSFont.systemFont(ofSize: min(24, max(9, size)))
+        }
+        if let name = row.fields["color"] { attributes[.foregroundColor] = color(name) }
+        entry.title = row.text
+        entry.attributedTitle = attributes.isEmpty ? nil : NSAttributedString(string: row.text, attributes: attributes)
+    }
+    func updateLabels() {
+        // Labels have no IDs in the script format. Match by position within each
+        // separator-delimited section, only when its label count is unchanged.
+        // Action insertions (such as "Run now") do not prevent status updates.
+        var sections = [[Row]]([[]])
+        for row in rows {
+            if row.text == "---" { sections.append([]) }
+            else if row.fields["bash"] == nil && row.fields["shell"] == nil {
+                sections[sections.count - 1].append(row)
+            }
+        }
+        guard sections.count == visibleLabels.count else { return }
+        for (entries, labels) in zip(visibleLabels, sections) where entries.count == labels.count {
+            for (entry, row) in zip(entries, labels) { style(entry, row: row) }
+        }
     }
     func color(_ name: String?) -> NSColor {
         switch name { case "orange": return .systemOrange; case "gray": return .systemGray

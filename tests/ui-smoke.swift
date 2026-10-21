@@ -42,7 +42,20 @@ let poll = Timer(timeInterval: 0.2, repeats: true) { _ in
         phase = 2
     case 2:
         phase = 3 // Prevent reentry during menu tracking.
-        let close = Timer(timeInterval: 0.1, repeats: false) { _ in host.menu.cancelTracking() }
+        if cycles == 0 {
+            let update = Timer(timeInterval: 0.05, repeats: false) { _ in
+                require(host.opened, "status check runs during actual menu tracking")
+                let label = host.menu.items.first { $0.title == "Action recorded" }!
+                let saved = host.rows
+                host.rows[0] = Row(text: "Batch: idle", fields: ["color": "green"])
+                host.render()
+                require(label.title == "Batch: idle", "visible status changes during actual menu tracking")
+                host.rows = saved
+                host.render()
+            }
+            RunLoop.main.add(update, forMode: .eventTracking)
+        }
+        let close = Timer(timeInterval: 0.2, repeats: false) { _ in host.menu.cancelTracking() }
         RunLoop.main.add(close, forMode: .eventTracking)
         RunLoop.main.add(close, forMode: .common)
         host.item.button?.performClick(nil)

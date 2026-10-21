@@ -31,6 +31,32 @@ let poll = Timer(timeInterval: 0.05, repeats: true) { _ in
                 "color without size is rendered")
         require(label.attributedTitle?.attribute(.font, at: 0, effectiveRange: nil) == nil,
                 "color does not require an explicit font size")
+        // Model a batch becoming idle and gaining a "Run now" action while open.
+        let originalRows = host.rows
+        host.opened = true
+        host.rows = try! parse("Fixture\n---\nIdle | color=orange size=17\nRun now | shell=/bin/echo terminal=false\nRecord argv | shell=/bin/echo terminal=false")
+        host.render()
+        require(label.title == "Idle", "status updates while open despite action insertion")
+        require((label.attributedTitle?.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor) == .systemOrange,
+                "open status color updates")
+        require((label.attributedTitle?.attribute(.font, at: 0, effectiveRange: nil) as? NSFont)?.pointSize == 17,
+                "open status size updates")
+        require(host.menu.items.contains { $0 === oldItem } && !host.menu.items.contains { $0.title == "Run now" },
+                "action insertion deferred without replacing original action")
+        host.rows = try! parse("Fixture\n---\nPlain status\nRecord argv | shell=/bin/echo terminal=false")
+        host.render()
+        require(label.title == "Plain status" && label.attributedTitle == nil, "refresh removes old styling")
+        host.rows = try! parse("Fixture\n---\nInserted label\nAnother status")
+        host.render()
+        require(label.title == "Plain status", "ambiguous label insertion deferred")
+        host.rows = try! parse("Fixture\n---\nNew section\n---\nOther status")
+        host.render()
+        require(label.title == "Plain status", "separator insertion deferred")
+        host.rows = originalRows
+        host.render()
+        require(label.title == "Waiting for action", "matching status recovers before closing")
+        host.menuDidClose(host.menu)
+        oldItem = host.menu.items.first { $0.title == "Record argv" }!
         // Exercise the queue bound without launching any synthetic commands.
         host.busy = true
         for i in 0..<host.maximumQueuedActions {
