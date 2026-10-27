@@ -23,7 +23,7 @@ root = pathlib.Path(sys.argv[1])
 (root / 'Contents/Info.plist').write_bytes(plistlib.dumps(dict(
     CFBundleIdentifier='org.pvrlabs.leanbar', CFBundleName='LeanBar',
     CFBundleExecutable='LeanBar', CFBundlePackageType='APPL',
-    CFBundleShortVersionString='0.1.1-dev', CFBundleVersion='2',
+    CFBundleShortVersionString='0.1.1', CFBundleVersion='2',
     LSMinimumSystemVersion='13.0',
     LSUIElement=True, NSHighResolutionCapable=True,
     NSHumanReadableCopyright='Copyright 2026 PVRLabs. MIT License.')))

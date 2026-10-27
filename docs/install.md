@@ -41,7 +41,7 @@ Install Python first. `brew install python` supplies it without developer tools.
 LeanBar checks `/opt/homebrew/bin/python3`, `/usr/local/bin/python3`, then
 `/usr/bin/python3` (the last option requires Apple's developer tools).
 
-Download v0.1.0, verify its checksum, and extract into your user Applications
+Download v0.1.1, verify its checksum, and extract into your user Applications
 folder. These commands run in a subshell so your current directory stays the same:
 
 ```sh
@@ -49,17 +49,17 @@ folder. These commands run in a subshell so your current directory stays the sam
   set -eu
   download_dir=$(mktemp -d)
   cd "$download_dir"
-  curl -fLO https://github.com/PVRLabs/leanbar/releases/download/v0.1.0/LeanBar-0.1.0-universal.zip
-  curl -fLO https://github.com/PVRLabs/leanbar/releases/download/v0.1.0/LeanBar-0.1.0-universal.zip.sha256
-  shasum -a 256 -c LeanBar-0.1.0-universal.zip.sha256
+  curl -fLO https://github.com/PVRLabs/leanbar/releases/download/v0.1.1/LeanBar-0.1.1-universal.zip
+  curl -fLO https://github.com/PVRLabs/leanbar/releases/download/v0.1.1/LeanBar-0.1.1-universal.zip.sha256
+  shasum -a 256 -c LeanBar-0.1.1-universal.zip.sha256
   mkdir -p "$HOME/Applications"
-  ditto -x -k LeanBar-0.1.0-universal.zip "$HOME/Applications"
+  ditto -x -k LeanBar-0.1.1-universal.zip "$HOME/Applications"
 )
 open "$HOME/Applications/LeanBar.app" --args "$HOME/Applications/LeanBar.app/Contents/Resources/menu.sh"
 ```
 
 You can also download the ZIP and checksum from the
-[GitHub release](https://github.com/PVRLabs/leanbar/releases/tag/v0.1.0).
+[GitHub release](https://github.com/PVRLabs/leanbar/releases/tag/v0.1.1).
 Use one installation method to avoid duplicate copies.
 
 ## First launch and Gatekeeper

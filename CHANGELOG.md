@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.1 — 2026-10-26
 
 - Show the app version in the “LeanBar <version> GitHub…” menu item.
 
