@@ -64,13 +64,12 @@ func parse(_ text: String) throws -> [Row] {
 final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     let menu = NSMenu()
-    var rows = [Row](), busy = false, opened = false, pending = false
+    var rows = [Row](), busy = false, opened = false
     var message = "Preparing…"
     var actions = [MenuCommand](), refreshPending = false
     var activeCommand: MenuCommand?
     var queueNotice: String?
     let maximumQueuedActions = 16
-    var visibleLabels = [[NSMenuItem]]()
     var stateItem: NSMenuItem?
     var timer: Timer?
     let producer: String, helper: String, interval: Double
@@ -87,7 +86,6 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func menuWillOpen(_ menu: NSMenu) { opened = true; refresh() }
     func menuDidClose(_ menu: NSMenu) {
         opened = false
-        if pending { render() }
     }
     func updateState() {
         guard let state = stateItem else { return }
@@ -117,21 +115,13 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             entry.isEnabled = suffix.isEmpty && entry.action != nil
         }
-        // Update existing item properties only while tracking, never menu structure.
     }
     func render() {
-        guard !opened else {
-            pending = true
-            updateLabels()
-            updateState()
-            return
-        }
-        pending = false; menu.removeAllItems()
-        visibleLabels = [[]]
+        menu.removeAllItems()
         let state = NSMenuItem(title: message, action: nil, keyEquivalent: "")
         stateItem = state; menu.addItem(state)
         for row in rows {
-            if row.text == "---" { menu.addItem(.separator()); visibleLabels.append([]); continue }
+            if row.text == "---" { menu.addItem(.separator()); continue }
             let executable = row.fields["bash"] ?? row.fields["shell"]
             let entry = NSMenuItem(title: row.text, action: executable != nil ? #selector(action(_:)) : nil, keyEquivalent: "")
             entry.target = self
@@ -142,11 +132,12 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 entry.representedObject = MenuCommand(title: row.text, argv: [executable] + args)
             }
             style(entry, row: row)
-            if executable == nil { visibleLabels[visibleLabels.count - 1].append(entry) }
             menu.addItem(entry)
         }
         menu.addItem(.separator())
-        let about = NSMenuItem(title: "About LeanBar…", action: #selector(aboutHost), keyEquivalent: "")
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        let aboutTitle = version.map { "LeanBar \($0) GitHub…" } ?? "LeanBar GitHub…"
+        let about = NSMenuItem(title: aboutTitle, action: #selector(aboutHost), keyEquivalent: "")
         about.target = self; menu.addItem(about)
         let quit = NSMenuItem(title: "Quit LeanBar", action: #selector(quitHost), keyEquivalent: "q")
         quit.target = self; menu.addItem(quit)
@@ -160,22 +151,6 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if let name = row.fields["color"] { attributes[.foregroundColor] = color(name) }
         entry.title = row.text
         entry.attributedTitle = attributes.isEmpty ? nil : NSAttributedString(string: row.text, attributes: attributes)
-    }
-    func updateLabels() {
-        // Labels have no IDs in the script format. Match by position within each
-        // separator-delimited section, only when its label count is unchanged.
-        // Action insertions (such as "Run now") do not prevent status updates.
-        var sections = [[Row]]([[]])
-        for row in rows {
-            if row.text == "---" { sections.append([]) }
-            else if row.fields["bash"] == nil && row.fields["shell"] == nil {
-                sections[sections.count - 1].append(row)
-            }
-        }
-        guard sections.count == visibleLabels.count else { return }
-        for (entries, labels) in zip(visibleLabels, sections) where entries.count == labels.count {
-            for (entry, row) in zip(entries, labels) { style(entry, row: row) }
-        }
     }
     func color(_ name: String?) -> NSColor {
         switch name { case "orange": return .systemOrange; case "gray": return .systemGray
@@ -248,13 +223,7 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     } else { self.refreshPending = true }
                 } catch {
                     self.rows = []; self.message = "Failed: \(error)"
-                    // Existing visible rows must not remain enabled on a failed snapshot.
-                    if self.opened {
-                        for entry in self.menu.items where entry.representedObject is MenuCommand {
-                            entry.action = nil
-                            entry.isEnabled = false
-                        }
-                    }
+
                 }
                 self.render()
                 self.drain()

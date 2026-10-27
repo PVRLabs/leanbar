@@ -25,6 +25,8 @@ easy to understand and maintain.
   effects, or full SwiftBar compatibility unless explicitly requested.
 - Make the smallest change that solves a real menu need. Do not add speculative
   extension points, generic frameworks, or compatibility layers.
+- Do not add complexity to eliminate an edge case unless it causes a meaningful
+  problem in the intended workflow.
 - For changes that can affect resource use, compare representative idle and
   menu-interaction behavior. Include transient helpers in the assessment; do not
   trade lower host memory for persistent external processes. Report the setup

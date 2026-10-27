@@ -2,8 +2,10 @@
 
 ## Unreleased
 
-- Refresh status label text, color and size while the menu is open; defer
-  structural changes until closing and preserve visible action commands.
+- Show the app version in the “LeanBar <version> GitHub…” menu item.
+
+- Apply full refresh results while the menu is open, including changed actions
+  and separators, so service controls update without closing and reopening.
 
 - Renamed the screenshot example to `examples/menu-demo.sh` for future release
   screenshots; `examples/menu.sh` remains the live example shipped with the app.

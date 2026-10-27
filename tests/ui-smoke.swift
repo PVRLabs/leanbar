@@ -48,8 +48,11 @@ let poll = Timer(timeInterval: 0.2, repeats: true) { _ in
                 let label = host.menu.items.first { $0.title == "Action recorded" }!
                 let saved = host.rows
                 host.rows[0] = Row(text: "Batch: idle", fields: ["color": "green"])
+                host.rows.append(Row(text: "Start fixture", fields: ["shell": "/bin/echo", "terminal": "false"]))
                 host.render()
-                require(label.title == "Batch: idle", "visible status changes during actual menu tracking")
+                require(!host.menu.items.contains { $0 === label } && host.menu.items.contains { $0.title == "Batch: idle" }, "visible status changes during actual menu tracking")
+                require(host.menu.items.contains { $0.title == "Start fixture" && $0.action != nil },
+                        "new action appears during actual menu tracking")
                 host.rows = saved
                 host.render()
             }

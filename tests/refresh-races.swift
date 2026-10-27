@@ -26,7 +26,7 @@ let poll = Timer(timeInterval: 0.05, repeats: true) { _ in
         guard !host.busy, host.rows.count == 2 else { return }
         require(host.stateItem!.isHidden, "idle snapshot has no status row")
         oldItem = host.menu.items.first { $0.title == "Record argv" }!
-        let label = host.menu.items.first { $0.title == "Waiting for action" }!
+        var label = host.menu.items.first { $0.title == "Waiting for action" }!
         require((label.attributedTitle?.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor) == .systemGreen,
                 "color without size is rendered")
         require(label.attributedTitle?.attribute(.font, at: 0, effectiveRange: nil) == nil,
@@ -36,24 +36,29 @@ let poll = Timer(timeInterval: 0.05, repeats: true) { _ in
         host.opened = true
         host.rows = try! parse("Fixture\n---\nIdle | color=orange size=17\nRun now | shell=/bin/echo terminal=false\nRecord argv | shell=/bin/echo terminal=false")
         host.render()
+        label = host.menu.items[1]
         require(label.title == "Idle", "status updates while open despite action insertion")
         require((label.attributedTitle?.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor) == .systemOrange,
                 "open status color updates")
         require((label.attributedTitle?.attribute(.font, at: 0, effectiveRange: nil) as? NSFont)?.pointSize == 17,
                 "open status size updates")
-        require(host.menu.items.contains { $0 === oldItem } && !host.menu.items.contains { $0.title == "Run now" },
-                "action insertion deferred without replacing original action")
+        require(!host.menu.items.contains { $0 === oldItem } && host.menu.items.contains { $0.title == "Run now" },
+                "action insertion appears immediately")
         host.rows = try! parse("Fixture\n---\nPlain status\nRecord argv | shell=/bin/echo terminal=false")
         host.render()
+        label = host.menu.items[1]
         require(label.title == "Plain status" && label.attributedTitle == nil, "refresh removes old styling")
         host.rows = try! parse("Fixture\n---\nInserted label\nAnother status")
         host.render()
-        require(label.title == "Plain status", "ambiguous label insertion deferred")
+        label = host.menu.items[1]
+        require(label.title == "Inserted label", "label insertion appears immediately")
         host.rows = try! parse("Fixture\n---\nNew section\n---\nOther status")
         host.render()
-        require(label.title == "Plain status", "separator insertion deferred")
+        label = host.menu.items[1]
+        require(label.title == "New section" && host.menu.items.contains { $0.isSeparatorItem }, "separator insertion appears immediately")
         host.rows = originalRows
         host.render()
+        label = host.menu.items[1]
         require(label.title == "Waiting for action", "matching status recovers before closing")
         host.menuDidClose(host.menu)
         oldItem = host.menu.items.first { $0.title == "Record argv" }!
@@ -91,37 +96,37 @@ let poll = Timer(timeInterval: 0.05, repeats: true) { _ in
                 "queued progress label cannot show updated menu")
     case 11:
         guard host.activeCommand != nil else { return }
-        require(host.pending && !host.stateItem!.isHidden && host.stateItem!.title.hasPrefix("Running"), "running action with pending snapshot")
+        require(!host.stateItem!.isHidden && host.stateItem!.title.hasPrefix("Running"), "running action with refreshed snapshot")
         require(host.stateItem!.action == nil && !host.stateItem!.isEnabled,
                 "running progress label cannot show updated menu")
         host.action(oldItem!)
-        require(host.actions.isEmpty && !oldItem!.isEnabled && oldItem!.title.contains("running"),
+        require(host.actions.isEmpty && host.menu.items.contains { $0.title == "Different action" },
                 "duplicate running click suppressed and item marked running")
         // Another item instance can come from reopening/rebuilding the menu.
         let duplicate = NSMenuItem()
         duplicate.representedObject = oldItem!.representedObject
         host.action(duplicate)
         require(host.actions.isEmpty, "same running argv cannot be resubmitted from another item")
-        // Retain the original entry for the existing snapshot-binding regression.
+        // A retained sender must still carry its original command.
         phase = 2
     case 2:
         guard !host.busy, host.actions.isEmpty, host.rows.count == 3 else { return }
         require(host.opened, "refresh and queued action complete while menu stays open")
         require(history() == [expected], "queued action executes exactly once with original argv")
-        require(host.stateItem!.isHidden, "completed actions hide status while fresh snapshot is pending")
-        require(host.menu.items.contains { $0 === oldItem }, "visible snapshot remains stable after row insertion")
+        require(host.stateItem!.isHidden, "completed actions hide progress with fresh snapshot visible")
+        require(!host.menu.items.contains { $0 === oldItem } && host.menu.items.contains { $0.title == "Different action" }, "latest actions appear while open")
         require(host.stateItem!.action == nil && !host.stateItem!.isEnabled, "snapshot feedback remains informational")
         phase = 3
         host.action(oldItem!)
     case 3:
         guard !host.busy, host.actions.isEmpty else { return }
-        require(history() == [expected, expected], "old visible item still executes original command after producer reorders rows")
+        require(history() == [expected, expected], "retained item keeps original command after producer reorders rows")
         phase = 4
         host.menuDidClose(host.menu)
     case 4:
         guard !host.opened else { return }
-        require(!host.pending && host.menu.items.contains(where: { $0.title == "Different action" }),
-                "closing applies latest snapshot")
+        require(host.menu.items.contains(where: { $0.title == "Different action" }),
+                "closing preserves latest snapshot")
         phase = 41
         host.menuWillOpen(host.menu)
     case 41:
