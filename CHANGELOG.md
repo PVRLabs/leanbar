@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2-dev
+
+- Allow a first-line `title=TEXT` directive to set a bounded plain-text
+  menu-bar caption, with `LB` as the default and last-successful preservation
+  across refresh failures.
+
 ## 0.1.1 — 2026-10-26
 
 - Show the app version in the “LeanBar <version> GitHub…” menu item.

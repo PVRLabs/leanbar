@@ -20,13 +20,19 @@ class Checks(unittest.TestCase):
         parsed = subprocess.run([str(BINARY), '--check'], input=text, capture_output=True)
         self.assertEqual(parsed.returncode, 0, parsed.stderr)
         self.assertIn(b'3 actions', parsed.stdout)
+        self.assertTrue(text.startswith('title=🔋 LeanBar\n---\n'.encode()))
+
+    def test_existing_ignored_header_still_parses(self):
+        result = subprocess.run([str(BINARY), '--check'], input='Anything at all\n---\nStatus\n',
+                                text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_battery_states(self):
         with tempfile.TemporaryDirectory() as directory:
             pmset = Path(directory) / 'pmset'
             pmset.write_text('#!/bin/sh\nprintf \'%s\\n\' "$TEST_BATTERY"\n')
             pmset.chmod(0o755)
-            for script in ('menu.sh', 'menu-demo.sh'):
+            for script in ('menu.sh',):
                 for state, percent, label in (
                     ('charging', 85, 'charging'), ('not charging', 85, 'not charging'),
                     ('charged', 100, 'charged'), ('discharging', 85, 'unplugged'),

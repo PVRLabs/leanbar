@@ -37,6 +37,10 @@ summarize the release in its GitHub description. No announcement process.
 5. Verify a fresh cask install, a configured menu, and uninstall. The intended
    command is `brew install --cask pvrlabs/tap/leanbar`; document it in README
    only after the cask is published and verified.
+6. After publishing, advance `build.sh`'s bundle version to the next version
+   with a `-dev` suffix, and start the matching `CHANGELOG.md` section. For
+   example, after releasing `0.1.1`, set the development version to
+   `0.1.2-dev`. Keep this follow-up change off the tagged release commit.
 
 The release tag stays on the exact released source. Keep GitHub Releases as the
 binary source and the tap as a small distribution index. No cross-repository

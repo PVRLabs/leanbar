@@ -28,12 +28,13 @@ else:
     (root / 'producer-started').touch()
     if (root / 'delay').exists():
         time.sleep(.6)
-    print('Fixture\\n---')
     if (root / 'mode').exists():
+        print('title=🟢 Fixture\\n---')
         print('Changed status\\nInserted label')
         print('Different action | shell=' + shlex.quote(str(pathlib.Path(__file__).resolve())) +
               ' param1=wrong terminal=false refresh=true')
         sys.exit(0)
+    print('Fixture\\n---')
     print(('Action recorded' if (root / 'action.json').exists() else 'Waiting for action') + ' | color=green')
     print('Record argv | shell=' + shlex.quote(str(pathlib.Path(__file__).resolve())) +
           ' param1="literal space" param2="$(printf unsafe)" terminal=false refresh=true')

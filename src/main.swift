@@ -9,6 +9,21 @@ struct MenuCommand {
     let argv: [String]
 }
 enum Invalid: Error { case format(String) }
+let defaultCaption = "LB"
+let maximumCaptionLength = 16
+
+func caption(_ text: String) -> String {
+    guard text.hasPrefix("title=") else { return defaultCaption }
+    let value = String(text.dropFirst(6))
+    guard !value.isEmpty, value.unicodeScalars.allSatisfy({ !CharacterSet.controlCharacters.contains($0) }) else {
+        return defaultCaption
+    }
+    return String(value.prefix(maximumCaptionLength))
+}
+
+func captionFromOutput(_ text: String) -> String {
+    caption(String(text.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false).first ?? ""))
+}
 
 // Deliberately small quoting grammar: whitespace, single/double quotes, backslash.
 func tokens(_ value: String) throws -> [String] {
@@ -65,6 +80,7 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     let menu = NSMenu()
     var rows = [Row](), busy = false, opened = false
+    var displayedCaption = defaultCaption
     var message = "Preparing…"
     var actions = [MenuCommand](), refreshPending = false
     var activeCommand: MenuCommand?
@@ -77,7 +93,7 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
         self.producer = producer; self.helper = helper; self.interval = interval
     }
     func applicationDidFinishLaunching(_ notification: Notification) {
-        item.button?.title = "LB"
+        item.button?.title = displayedCaption
         menu.autoenablesItems = false
         menu.delegate = self; item.menu = menu
         render(); refresh()
@@ -218,7 +234,10 @@ final class Host: NSObject, NSApplicationDelegate, NSMenuDelegate {
                         throw Invalid.format("\(completed["error"] ?? "helper failed"): \(completed["stderr"] ?? "")")
                     }
                     if producerResult {
-                        self.rows = try parse(completed["stdout"] as? String ?? "")
+                        let output = completed["stdout"] as? String ?? ""
+                        self.rows = try parse(output)
+                        self.displayedCaption = captionFromOutput(output)
+                        self.item.button?.title = self.displayedCaption
                         self.message = ""
                     } else { self.refreshPending = true }
                 } catch {

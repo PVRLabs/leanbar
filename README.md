@@ -10,7 +10,7 @@ small supported subset. A script prints status and actions; LeanBar turns them
 into a native macOS menu. Use it as a small control panel for services, apps,
 scheduled jobs and logs, with the management logic staying in your scripts.
 
-One script. One native menu. Plain **LB** text in the menu bar. No marketplace,
+One script. One native menu. Plain text in the menu bar. No marketplace,
 settings UI, animation, or third-party libraries. The host uses Swift + AppKit;
 a short-lived Python helper bounds command execution.
 
@@ -49,9 +49,10 @@ Use `./build.sh --universal` to build for both Intel and Apple Silicon with a
 macOS 13 minimum. The app includes the MIT license and example menu in
 `Contents/Resources/`.
 
-`examples/menu.sh` is a live desk: a greeting, the time, power, free disk,
-and a few actions. `examples/menu-demo.sh` uses a sample machine name and disk
-value for release screenshots.
+`examples/menu.sh` is a live desk: a greeting, the time, power, machine details,
+free disk, and a few actions. It shows real details by default; set
+`LEANBAR_DEMO=1` for generic machine, battery, and disk details.
+`examples/menu-demo.sh` launches that anonymized demo mode for screenshots.
 
 To reuse an existing script, pass its absolute executable path:
 
@@ -79,7 +80,7 @@ LeanBar accepts a deliberately small flat subset of SwiftBar output. Your
 existing script can work unchanged if it stays within this subset:
 
 ```text
-Ignored header
+title=🔋 LeanBar
 ---
 Service: running | color=green size=13
 Open dashboard | shell=/usr/bin/open param1=http://127.0.0.1:8765 terminal=false
@@ -88,8 +89,12 @@ Restart service | bash=/absolute/path/to/control.sh param1=restart terminal=fals
 Last success: 09:00 | size=12
 ```
 
-- The first line is ignored; the second must be `---`. Header images are not
-  loaded. The host always displays LB.
+- The optional first-line `title=TEXT` directive sets the menu-bar caption. It
+  is metadata, not a menu item. Without it, LeanBar displays `LB`, preserving
+  existing scripts whose first line is ignored. An empty title also uses `LB`.
+  Captions use native plain-text rendering and are limited to 16 characters;
+  images, custom fonts, and rich text are not loaded. The second line must be
+  `---`.
 - Flat labels, `---` separators, `color` and `size` are supported. Colors:
   orange, gray, red, green, blue; other names use the system label color.
   Sizes are clamped to 9–24 points. Labels without commands are disabled.
@@ -113,8 +118,9 @@ Run a read-only producer through the parser before switching:
 ## Quiet refresh, bounded commands
 
 Opening shows the cached menu and requests fresh status. Each successful refresh
-updates the full menu immediately, including labels, actions and separators while
-open. Each action item carries the arguments of its displayed command. Background
+updates the caption and full menu immediately, including labels, actions and
+separators while open. A failed refresh preserves the last successful caption.
+Each action item carries the arguments of its displayed command. Background
 refreshes are quiet. Queued/running actions show progress, and failures remove
 stale actions immediately.
 

@@ -1,7 +1,9 @@
 #!/bin/bash
-# Flat desk menu. SwiftBar shows the first line in the bar; LeanBar shows LB.
-# LeanBar may support a custom menu bar title from the first line in a future release.
+# Flat desk menu. Real machine details are shown by default; set LEANBAR_DEMO=1
+# to use generic and sample details instead. The title directive sets caption.
 # Status lines have no command. Actions use an absolute executable and terminal=false.
+
+demo=${LEANBAR_DEMO:-0}
 
 hour=$(date +%H)
 case $hour in
@@ -12,43 +14,56 @@ case $hour in
 esac
 
 when=$(date '+%a %-d %b · %-I:%M %p')
-host=$(scutil --get ComputerName 2>/dev/null || hostname -s 2>/dev/null || printf 'This Mac')
-host=${host//|/}
-host=${host//$'\n'/ }
-if (( ${#host} > 32 )); then host="${host:0:32}"; fi
+if [[ "$demo" == 1 ]]; then
+  host="This Mac"
+else
+  host=$(scutil --get ComputerName 2>/dev/null || hostname -s 2>/dev/null || printf 'This Mac')
+  host=${host//|/}
+  host=${host//$'\n'/ }
+  if (( ${#host} > 32 )); then host="${host:0:32}"; fi
+fi
 
 power_line="On AC power"
 power_color="green"
-batt=$(pmset -g batt 2>/dev/null || true)
-pct=$(printf '%s\n' "$batt" | awk 'match($0, /[0-9]+%/) { print substr($0, RSTART, RLENGTH - 1); exit }')
-battery_state=$(printf '%s\n' "$batt" | awk -F ';' '/[0-9]+%/ { state=$2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", state); print state; exit }')
-if [[ "$pct" =~ ^[0-9]+$ ]]; then
-  if [[ "$battery_state" == discharging ]]; then
-    if (( pct <= 20 )); then
-      power_line="Battery ${pct}% · low"
-      power_color="red"
+if [[ "$demo" == 1 ]]; then
+  power_line="Battery 82% · charging"
+  power_color="blue"
+else
+  batt=$(pmset -g batt 2>/dev/null || true)
+  pct=$(printf '%s\n' "$batt" | awk 'match($0, /[0-9]+%/) { print substr($0, RSTART, RLENGTH - 1); exit }')
+  battery_state=$(printf '%s\n' "$batt" | awk -F ';' '/[0-9]+%/ { state=$2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", state); print state; exit }')
+  if [[ "$pct" =~ ^[0-9]+$ ]]; then
+    if [[ "$battery_state" == discharging ]]; then
+      if (( pct <= 20 )); then
+        power_line="Battery ${pct}% · low"
+        power_color="red"
+      else
+        power_line="Battery ${pct}% · unplugged"
+        power_color="orange"
+      fi
+    elif [[ "$battery_state" == charging ]]; then
+      power_line="Battery ${pct}% · charging"
+      power_color="blue"
+    elif [[ "$battery_state" == "not charging" ]]; then
+      power_line="Battery ${pct}% · not charging"
+      power_color="green"
+    elif [[ "$battery_state" == charged ]]; then
+      power_line="Battery ${pct}% · charged"
+      power_color="green"
     else
-      power_line="Battery ${pct}% · unplugged"
-      power_color="orange"
+      power_line="Battery ${pct}%"
+      power_color="green"
     fi
-  elif [[ "$battery_state" == charging ]]; then
-    power_line="Battery ${pct}% · charging"
-    power_color="blue"
-  elif [[ "$battery_state" == "not charging" ]]; then
-    power_line="Battery ${pct}% · not charging"
-    power_color="green"
-  elif [[ "$battery_state" == charged ]]; then
-    power_line="Battery ${pct}% · charged"
-    power_color="green"
-  else
-    power_line="Battery ${pct}%"
-    power_color="green"
   fi
 fi
 
-free_gb=$(df -g / 2>/dev/null | awk 'NR==2 { print $4 }')
+if [[ "$demo" == 1 ]]; then
+  free_gb=""
+else
+  free_gb=$(df -g / 2>/dev/null | awk 'NR==2 { print $4 }')
+fi
 
-printf '%s\n---\n' "$hello"
+printf 'title=🔋 LeanBar\n---\n'
 printf '%s desk | color=blue size=15\n' "$hello"
 printf '%s | size=12\n' "$when"
 printf -- '---\n'
@@ -56,6 +71,8 @@ printf '%s | color=gray size=11\n' "$host"
 printf '%s | color=%s size=13\n' "$power_line" "$power_color"
 if [[ "$free_gb" =~ ^[0-9]+$ ]]; then
   printf '%s GB free | size=12\n' "$free_gb"
+elif [[ "$demo" == 1 ]]; then
+  printf 'Plenty of disk space | size=12\n'
 fi
 printf -- '---\n'
 printf 'Open | color=gray size=11\n'

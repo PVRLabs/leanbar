@@ -19,11 +19,20 @@ func history() -> [[String]] {
     return try! JSONSerialization.jsonObject(with: data) as! [[String]]
 }
 let expected = ["literal space", "$(printf unsafe)"]
+require(captionFromOutput("Ignored header\n---\nStatus") == "LB", "ignored first line keeps default caption")
+require(captionFromOutput("title=PVR\n---\nStatus") == "PVR", "custom caption is parsed")
+require(captionFromOutput("title=● Café 🚀\n---\nStatus") == "● Café 🚀", "Unicode and emoji caption is parsed")
+require(captionFromOutput("title=\n---\nStatus") == "LB", "empty caption uses default")
+require(captionFromOutput("title\n---\nStatus") == "LB", "malformed directive keeps default")
+require(captionFromOutput("title=Bad\u{0}Title\n---\nStatus") == "LB", "control characters use default")
+require(captionFromOutput("title=" + String(repeating: "x", count: 40) + "\n---\nStatus").count == maximumCaptionLength,
+        "long caption is bounded")
 let poll = Timer(timeInterval: 0.05, repeats: true) { _ in
     if Date().timeIntervalSince(started) > 25 { fputs("Race check timeout at phase \(phase)\n", stderr); exit(1) }
     switch phase {
     case 0:
         guard !host.busy, host.rows.count == 2 else { return }
+        require(host.displayedCaption == "LB" && host.item.button?.title == "LB", "default caption is displayed")
         require(host.stateItem!.isHidden, "idle snapshot has no status row")
         oldItem = host.menu.items.first { $0.title == "Record argv" }!
         var label = host.menu.items.first { $0.title == "Waiting for action" }!
@@ -111,6 +120,8 @@ let poll = Timer(timeInterval: 0.05, repeats: true) { _ in
         phase = 2
     case 2:
         guard !host.busy, host.actions.isEmpty, host.rows.count == 3 else { return }
+        require(host.displayedCaption == "🟢 Fixture" && host.item.button?.title == "🟢 Fixture",
+                "successful refresh dynamically updates caption")
         require(host.opened, "refresh and queued action complete while menu stays open")
         require(history() == [expected], "queued action executes exactly once with original argv")
         require(host.stateItem!.isHidden, "completed actions hide progress with fresh snapshot visible")
@@ -136,6 +147,7 @@ let poll = Timer(timeInterval: 0.05, repeats: true) { _ in
         mark("fail"); host.refresh()
     case 5:
         guard !host.busy, host.message.hasPrefix("Failed:") else { return }
+        require(host.item.button?.title == "🟢 Fixture", "refresh failure preserves last successful caption")
         require(host.rows.isEmpty, "failure clears current snapshot")
         require(!host.stateItem!.isHidden && host.stateItem!.title.hasPrefix("Failed:"), "failure feedback appears while tracking")
         require(host.menu.items.filter { $0.representedObject is MenuCommand }.allSatisfy { !$0.isEnabled && $0.action == nil },
